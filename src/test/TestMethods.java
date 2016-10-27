@@ -36,6 +36,8 @@ public class TestMethods {
 
     }
 
+
+    
     private static void getNamesContactList() {
         System.out.println();
         IControllerlist iControllerlist = InitData.createTestData();
