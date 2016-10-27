@@ -1,25 +1,249 @@
 package test;
 
-import appDB.AppDBImpl;
 import appDB.IappDB;
 import constants.OperatorModifiers;
 import controller.IControllerlist;
 import exceptions.ContactNullPointerException;
-import exceptions.RemoveContactException;
 import exceptions.WordIsEmpty;
 import model.Contact;
-import utils.IOutilsImpl;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
 
 import java.io.*;
 import java.util.Set;
 import java.util.TreeSet;
+
 
 /**
  * Created by work on 09.10.2016.
  */
 public class TestMethods {
 
-    public static void main(String[] args) {
+    @Test
+    public void addContact() {
+        IControllerlist iControllerlist = InitData.createTestData();
+        boolean addContactResult = iControllerlist.addContact("Smit", "0937721749", "wieurw@gmail.com");
+        Assert.assertEquals("Test method AddContact", true, addContactResult);
+    }
+
+    @Test
+    public void deleteContact() {
+        IControllerlist iControllerlist = InitData.createTestData();
+        Contact contact = new Contact("Timur", "0937721749", "wieurw@gmail.com");
+        boolean addContactResult = iControllerlist.getContactList().add(contact);
+        boolean deleteContactResult = iControllerlist.getContactList().remove(contact);
+
+        Assert.assertEquals("Test method deleteContact ", true, addContactResult && deleteContactResult);
+    }
+
+    @Test
+    public void saveDB() {
+        System.out.println();
+
+        IControllerlist iControllerlist = InitData.createTestData();
+        String pathDB = "src/test/testDBForSave.txt";
+
+        int testDBForNull = 0;
+        File fileDB = new File(pathDB);
+        try {
+            iControllerlist.saveDB(pathDB);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        BufferedInputStream bis = null;
+        try {
+            bis = new BufferedInputStream(
+                    new FileInputStream(fileDB));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            testDBForNull = bis.read();
+            bis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        Assert.assertNotEquals("Test method saveDB", testDBForNull, -1);
+
+        fileDB.delete();
+
+    }
+
+    @Test
+    public void loadDB() {
+
+        System.out.println();
+
+        IControllerlist iControllerlist = InitData.createTestData();
+        String pathDB = "src/test/testDBForLoad.txt";
+        File fileDB = new File(pathDB);
+
+        try {
+            iControllerlist.saveDB(pathDB);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        IappDB iappDB = null;
+        try {
+            iappDB = iControllerlist.loadDB(pathDB);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Set<Contact> beforeLoadContactList = iControllerlist.getContactList();
+        Set<Contact> afterLoadContactList = iappDB.getContactList();
+
+        UtilsForTestMethod.utilForEquelsContactList(beforeLoadContactList, afterLoadContactList, "loadDB");
+
+        fileDB.delete();
+
+    }
+
+    @Test
+    public void getNamesContactList() {
+
+        IControllerlist iControllerlist = InitData.createTestData();
+        Set<String> namesContactList = iControllerlist.getNamesContactList();
+        Set<Contact> gettedAllContacts = iControllerlist.getContactList();
+
+        Set<String> nameContacts = new TreeSet<>();
+        for (Contact contact : gettedAllContacts) {
+            nameContacts.add(contact.getName());
+        }
+
+        UtilsForTestMethod.utilsOperatorEqual(nameContacts, namesContactList, "getNamesContactList");
+    }
+
+    @Test
+    public void getContactMTS() {
+        System.out.println();
+        IControllerlist iControllerlist = InitData.createTestData();
+        Set<String>  gettedContactMTS = iControllerlist.getContactMTS();
+        Set<Contact> gettedAllContacts = iControllerlist.getContactList();
+
+        Set<String> operatorContacts = UtilsForTestMethod.operatorContacts(gettedAllContacts, OperatorModifiers.OPERATOR_MTS);
+
+        UtilsForTestMethod.utilsOperatorEqual(operatorContacts, gettedContactMTS, "getContactMTS");
+    }
+
+
+    @Test
+    public void getContactKievstar() {
+        System.out.println();
+        IControllerlist iControllerlist = InitData.createTestData();
+        Set<String>  gettedContactKievstar = iControllerlist.getContactKievstar();
+        Set<Contact> gettedAllContacts = iControllerlist.getContactList();
+
+        Set<String> operatorContacts = UtilsForTestMethod.operatorContacts(gettedAllContacts, OperatorModifiers.OPERATOR_KIEVSTAR);
+
+        UtilsForTestMethod.utilsOperatorEqual(operatorContacts, gettedContactKievstar, "getContactKievstar");
+    }
+
+    @Test
+    public void getContactLife() {
+        System.out.println();
+        IControllerlist iControllerlist = InitData.createTestData();
+        Set<String>  gettedContactLife = iControllerlist.getContactLife();
+        Set<Contact> gettedAllContacts = iControllerlist.getContactList();
+        Set<String> operatorContacts = UtilsForTestMethod.operatorContacts(gettedAllContacts, OperatorModifiers.OPERATOR_LIFE);
+
+        UtilsForTestMethod.utilsOperatorEqual(operatorContacts, gettedContactLife, "getContactLife");
+
+    }
+
+
+    @Test
+    public void getContactList() {
+
+        System.out.println();
+        IControllerlist iControllerlist = InitData.createTestData();
+        Set<Contact>  gettedContactList = iControllerlist.getContactList();
+
+        IappDB iappDB = null;
+        try {
+            iappDB = iControllerlist.getIappDB();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Set<Contact> contactList = iappDB.getContactList();
+        UtilsForTestMethod.utilForEquelsContactList(gettedContactList, contactList, "getContactList");
+
+    }
+
+    @Test
+    public void findContactNegativeTest() {
+
+        IControllerlist iControllerlist = InitData.createTestData();
+        iControllerlist.addContact("Timur", "0937721749", "wieurw@gmail.com");
+
+        Contact findContact1 = null;
+        Contact findContact2 = null;
+
+        boolean WordIsEmptyResult = false;
+        boolean NotFoundContactResult = false;
+
+
+        try {
+            findContact1 = iControllerlist.findContact("");
+        } catch (WordIsEmpty wordIsEmpty) {
+            WordIsEmptyResult = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ContactNullPointerException e) {
+            e.printStackTrace();
+        }
+
+
+        try {
+            findContact2 = iControllerlist.findContact("Tim");
+        } catch (WordIsEmpty wordIsEmpty) {
+            wordIsEmpty.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ContactNullPointerException e) {
+            NotFoundContactResult = true;
+        }
+
+        Assert.assertEquals("Test method findContactNegativeTest ", true, WordIsEmptyResult && NotFoundContactResult);
+    }
+
+    @Test
+    public void findContactPositiveTest() {
+
+        IControllerlist iControllerlist = InitData.createTestData();
+        Contact newContact = new Contact("Timur", "0937721749", "wieurw@gmail.com");
+        boolean AddContactResult = iControllerlist.getContactList().add(newContact);
+        Contact findContact = null;
+
+        try {
+            findContact = iControllerlist.findContact("Timur");
+        } catch (WordIsEmpty wordIsEmpty) {
+            wordIsEmpty.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ContactNullPointerException e) {
+            e.printStackTrace();
+        }
+
+        boolean equelsContactsResult = findContact.getName().equals(newContact.getName()) &&
+                findContact.getPhoneNumber().equals(newContact.getPhoneNumber()) &&
+                findContact.getEmail().equals(newContact.getEmail());
+
+        Assert.assertEquals("Test method findContactPositiveTest ", true, AddContactResult && equelsContactsResult);
+
+    }
+
+}
+
+// Test method from public static void main.............................................................................
+   /* public static void main(String[] args) {
 
         addContact();
         deleteContact();
@@ -37,7 +261,7 @@ public class TestMethods {
     }
 
 
-    
+
     private static void getNamesContactList() {
         System.out.println();
         IControllerlist iControllerlist = InitData.createTestData();
@@ -326,5 +550,4 @@ public class TestMethods {
 
         return operatorContacts;
     }
-
-}
+*/
